@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  # MySQL数据库
+  mysql:
+    image: mysql:8.0
+    container_name: typing-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: typing_practice
+      MYSQL_USER: typing_user
+      MYSQL_PASSWORD: typing_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - typing-network
+    restart: unless-stopped
+
+  # FastAPI后端
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: typing-backend
+    environment:
+      - DATABASE_URL=mysql://typing_user:typing_password@mysql:3306/typing_practice
+      - SECRET_KEY=your-secret-key-here
+      - CORS_ORIGINS=http://localhost:3000,http://frontend:3000
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mysql
+    networks:
+      - typing-network
+    restart: unless-stopped
+    volumes:
+      - ./backend:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # React前端
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: typing-frontend
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - typing-network
+    restart: unless-stopped
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+volumes:
+  mysql_data:
+
+networks:
+  typing-network:
+    driver: bridge

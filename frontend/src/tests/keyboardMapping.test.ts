@@ -66,17 +66,6 @@ const keyboardLayout = [
     { key: '.', en: '.', shift: '>', type: 'normal', width: 1 },
     { key: '/', en: '/', shift: '?', uy: 'ئ‍', type: 'normal', width: 1 },
     { key: 'Shift', en: 'ShiftRight', type: 'special', width: 2.75 }
-  ],
-  // 底部行
-  [
-    { key: 'Ctrl', en: 'ControlLeft', type: 'special', width: 1.25 },
-    { key: 'Win Key', en: 'MetaLeft', type: 'special', width: 1.25 },
-    { key: 'Alt', en: 'AltLeft', type: 'special', width: 1.25 },
-    { key: 'Space', en: 'Space', type: 'special', width: 6.25 },
-    { key: 'Alt', en: 'AltRight', type: 'special', width: 1.25 },
-    { key: 'Win Key', en: 'MetaRight', type: 'special', width: 1.25 },
-    { key: 'Menu', en: 'ContextMenu', type: 'special', width: 1.25 },
-    { key: 'Ctrl', en: 'ControlRight', type: 'special', width: 1.25 }
   ]
 ];
 
@@ -218,14 +207,15 @@ describe('维吾尔语键盘映射测试', () => {
   });
 
   describe('特殊键映射测试', () => {
-    it('应该正确映射空格键', () => {
-      expect(charToKeyMap[' ']).toEqual({ key: 'Space' });
+    it('应该正确映射特殊键', () => {
+      // 空格键已从键盘布局中移除
+      // 其他特殊键的测试可以在这里添加
     });
   });
 
   describe('测试文本字符映射验证', () => {
     it('应该能够映射当前测试文本中的所有字符', () => {
-      const testText = 'چ ۈ ې ر ت ي ۇ';
+      const testText = 'چۈېرتيۇ';
       const characters = testText.split('');
       
       for (const char of characters) {

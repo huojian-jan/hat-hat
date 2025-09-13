@@ -1,7 +1,20 @@
 import { CharacterInfo, TypingStats } from './types';
 
+// 内部空格占位符字符（选择一个极少出现的控制符）
+export const INTERNAL_SPACE = '\u241F'; // SYMBOL FOR UNIT SEPARATOR (visual debug-friendly)
+
+export function externalToInternalSpaces(text: string): string {
+  if (!text) return '';
+  return text.replace(/ /g, INTERNAL_SPACE);
+}
+
+export function internalToExternalSpaces(text: string): string {
+  if (!text) return '';
+  return text.replace(new RegExp(INTERNAL_SPACE, 'g'), ' ');
+}
+
 // 维吾尔语示例文本 - 完整的句子
-export const SAMPLE_TEXTS = [
+export const SAMPLE_TEXTS_UY = [
   'ئۇيغۇر تىلى ئۆگىنىش پروگراممىسى',
   'مەن ئۇيغۇر تىلىدا يېزىشنى ئۆگىنىمەن',
   'بۇ بىر ئاددىي تىل ئۆگىنىش پروگراممىسى',
@@ -29,15 +42,59 @@ export const SAMPLE_TEXTS = [
   'ئۇيغۇر خەلقىنىڭ ئەنئەنىۋى ئۇسۇللىرى'
 ];
 
+// 英文示例（单词 / 句子 / 简短段落混合）
+export const SAMPLE_TEXTS_EN = [
+  'Typing practice improves speed and accuracy',
+  'Learning new layouts can boost efficiency',
+  'Consistent practice leads to better results',
+  'Focus on rhythm and flow while typing',
+  'Small daily improvements compound over time',
+  'Clean code is a form of good communication',
+  'Never stop learning and exploring ideas',
+  'Stay curious and keep building projects'
+];
+
+// 中文汉字示例（用于拼音输入法练习）
+export const SAMPLE_TEXTS_CHINESE = [
+  '中国文化非常有趣',
+  '学习汉字可以帮助理解文化',
+  '每天都练习就能提高',
+  '坚持习惯是很重要的',
+  '好的基础能够带来高效',
+  '自然语言理解需要时间',
+  '编程是一种创造性的工作',
+  '技术发展改变了我们的生活',
+  '互联网连接了全世界',
+  '学习新技能需要耐心和坚持',
+  '阅读是获取知识的重要途径',
+  '沟通是人际关系的基础',
+  '团队合作能够创造更大的价值',
+  '创新思维推动社会进步',
+  '教育是国家发展的根本',
+  '环境保护是我们共同的责任',
+  '健康的生活方式很重要',
+  '家庭和睦是幸福的源泉',
+  '友谊是人生中珍贵的财富',
+  '梦想给我们前进的动力'
+];
+
 // 随机获取练习文本
-export function getRandomText(): string {
-  // 返回随机的维吾尔语练习文本
-  return SAMPLE_TEXTS[Math.floor(Math.random() * SAMPLE_TEXTS.length)];
+export function getRandomText(lang: 'uyghur' | 'english' | 'pinyin' = 'uyghur'): string {
+  let pool: string[] = SAMPLE_TEXTS_UY;
+  if (lang === 'english') pool = SAMPLE_TEXTS_EN;
+  else if (lang === 'pinyin') pool = SAMPLE_TEXTS_CHINESE;
+  return pool[Math.floor(Math.random() * pool.length)];
 }
 
 // 规范化Unicode文本
 export function normalizeText(text: string): string {
-  return text.normalize('NFC').trim();
+  if (!text) return '';
+  return text
+    .normalize('NFC')
+    // 去除零宽字符 (ZWSP,ZWNJ,ZWJ,BOM)
+    .replace(/[\u200B\u200C\u200D\uFEFF]/g, '')
+    // 各类 unicode 空格统一成普通空格
+  .replace(/[\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]/g, ' ');
 }
 
 // 计算字符状态数组
@@ -61,7 +118,7 @@ export function calculateCharacterStates(
     }
     
     return {
-      char,
+      char: char === INTERNAL_SPACE ? ' ' : char,
       status,
       index
     };

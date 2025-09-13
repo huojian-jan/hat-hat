@@ -1,4 +1,5 @@
 import React from 'react';
+import { isKeyActive } from '../services/keyboardHint';
 
 interface UyghurKeyboardProps {
   currentChar: string;
@@ -71,16 +72,16 @@ const keyboardLayout = [
     { key: '/', en: '/', shift: '?', uy: 'ئ‍', type: 'normal', width: 1 },
     { key: 'Shift', en: 'ShiftRight', type: 'special', width: 2.75 }
   ],
-  // 底部行
+  // 底部功能键与空格行（87 键风格，宽度大致近似）
   [
-    { key: 'Ctrl', en: 'ControlLeft', type: 'special', width: 1.25 },
-    { key: 'Win Key', en: 'MetaLeft', type: 'special', width: 1.25 },
-    { key: 'Alt', en: 'AltLeft', type: 'special', width: 1.25 },
-    { key: 'Space', en: 'Space', type: 'special', width: 6.25 },
-    { key: 'Alt', en: 'AltRight', type: 'special', width: 1.25 },
-    { key: 'Win Key', en: 'MetaRight', type: 'special', width: 1.25 },
-    { key: 'Menu', en: 'ContextMenu', type: 'special', width: 1.25 },
-    { key: 'Ctrl', en: 'ControlRight', type: 'special', width: 1.25 }
+    { key: 'ControlLeft', en: 'Ctrl', type: 'special', width: 1.25 },
+    { key: 'MetaLeft', en: 'Win', type: 'special', width: 1.25 },
+    { key: 'AltLeft', en: 'Alt', type: 'special', width: 1.25 },
+    { key: 'Space', en: 'Space', type: 'special', width: 6 },
+    { key: 'AltRight', en: 'Alt', type: 'special', width: 1.25 },
+    { key: 'MetaRight', en: 'Win', type: 'special', width: 1.25 },
+    { key: 'ContextMenu', en: 'Menu', type: 'special', width: 1.25 },
+    { key: 'ControlRight', en: 'Ctrl', type: 'special', width: 1.25 }
   ]
 ];
 
@@ -125,34 +126,20 @@ keyboardLayout.forEach(row => {
 charToKeyMap[' '] = { key: 'Space' };
 
 const UyghurKeyboard: React.FC<UyghurKeyboardProps> = ({ currentChar }) => {
-  // 获取当前字符需要的键位信息
-  const getKeyInfo = (char: string) => {
-    return charToKeyMap[char] || null;
-  };
-
-  const currentKeyInfo = currentChar ? getKeyInfo(currentChar) : null;
-
-  // 检查键是否应该被高亮
-  const isKeyActive = (keyInfo: any) => {
-    if (!currentKeyInfo) return false;
-    
+  // 检查键是否应该被高亮 - 使用新的键盘提示服务
+  const isKeyHighlighted = (keyInfo: any) => {
+    if (!currentChar) return false;
+    // 特殊键处理（Space / ShiftLeft / ShiftRight）
     if (keyInfo.type === 'special') {
-      // 特殊键处理
-      if (keyInfo.key === 'Shift' && currentKeyInfo.needsShift) {
-        return true;
-      }
-      // 空格键高亮逻辑
-      if (keyInfo.key === 'Space' && currentKeyInfo.key === 'Space') {
-        return true;
+      if (keyInfo.key === 'Space') return isKeyActive('uyghur', 'Space', currentChar);
+      if (keyInfo.en === 'ShiftLeft' || keyInfo.en === 'ShiftRight') {
+        return isKeyActive('uyghur', keyInfo.en, currentChar);
       }
       return false;
     }
-    
-    // 普通键处理
-    const isNormalMatch = currentKeyInfo.key === keyInfo.en && !currentKeyInfo.needsShift;
-    const isShiftMatch = currentKeyInfo.key === keyInfo.en && currentKeyInfo.needsShift;
-    
-    return isNormalMatch || isShiftMatch;
+    // 普通键：传入其英文基键（en）判断
+    if (keyInfo.en && isKeyActive('uyghur', keyInfo.en, currentChar)) return true;
+    return false;
   };
 
   // 获取键显示的内容
@@ -198,7 +185,7 @@ const UyghurKeyboard: React.FC<UyghurKeyboardProps> = ({ currentChar }) => {
     if (width === 2) return 'key-double';
     if (width === 2.25) return 'key-shift-left';
     if (width === 2.75) return 'key-shift-right';
-    if (width === 6.25) return 'key-space';
+  if (width >= 5) return 'key-space';
     return '';
   };
 
@@ -211,10 +198,18 @@ const UyghurKeyboard: React.FC<UyghurKeyboardProps> = ({ currentChar }) => {
               <div
                 key={keyIndex}
                 className={`keyboard-key ${getKeyWidthClass(keyInfo.width)} ${
-                  isKeyActive(keyInfo) ? 'active' : ''
+                  isKeyHighlighted(keyInfo) ? 'active' : ''
                 } ${keyInfo.type === 'special' ? 'special-key' : ''}`}
               >
-                {getKeyDisplay(keyInfo)}
+                {keyInfo.type === 'special' ? (
+                  keyInfo.key === 'Space' ? (
+                    <div className="key-content"><div className="key-main-char">SPACE</div></div>
+                  ) : (
+                    <div className="key-content"><div className="key-main-char">{keyInfo.en || keyInfo.key}</div></div>
+                  )
+                ) : (
+                  getKeyDisplay(keyInfo)
+                )}
               </div>
             ))}
           </div>
